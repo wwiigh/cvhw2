@@ -1,0 +1,10 @@
+data/
+logs/
+model/
+prediction/
+experiment/
+experimentlogs/
+solution/
+nycu-hw2-data.tar.gz
+pred.zip
+solution.zip

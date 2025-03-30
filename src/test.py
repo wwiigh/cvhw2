@@ -26,6 +26,7 @@ def test(path):
     file = open("pred.json", mode='w')
     cs = open("pred.csv", mode='w', newline="")
     writer = csv.writer(cs)
+    writer.writerow(["image_id","pred_label"])
     ans = []
     for (image, id) in tqdm(test_dataloader):
         image = image.to(device)
@@ -92,5 +93,5 @@ def test(path):
 
 
 if __name__ == "__main__":
-    test("model/exp7/exp7_14_final.pth")
+    test("model/exp9/exp9_19_final.pth")
 

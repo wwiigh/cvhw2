@@ -15,7 +15,7 @@ from model import get_model
 
 def train():
     """Start training"""
-    exp_dir = "exp9"
+    exp_dir = "exp13"
     if not os.path.exists(f"model/{exp_dir}"):
         os.makedirs(f"model/{exp_dir}")
 
@@ -42,12 +42,12 @@ def train():
                                          shuffle=True)
 
     model = get_model().to(device)
-    model.load_state_dict(torch.load("model/exp8/exp8_2_final.pth")['model_state_dict'])
+    # model.load_state_dict(torch.load("model/exp8/exp8_2_final.pth")['model_state_dict'])
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate,
                                   momentum=momentum, weight_decay=weight_decay)
-    optimizer.load_state_dict(torch.load("model/exp8/exp8_2_final.pth")['optimizer_state_dict'])
+    # optimizer.load_state_dict(torch.load("model/exp8/exp8_2_final.pth")['optimizer_state_dict'])
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[3, 6, 9, 12, 15, 18], gamma=0.5)
-    scheduler.load_state_dict(torch.load("model/exp8/exp8_2_final.pth")['scheduler_state_dict'])
+    # scheduler.load_state_dict(torch.load("model/exp8/exp8_2_final.pth")['scheduler_state_dict'])
 
     coco_gt = COCO("data/valid.json")
 
@@ -65,9 +65,7 @@ def train():
 
             output = model(image, target)
  
-            loss = 0
-            for l in output.values():
-                loss += l
+            loss = output["loss_classifier"] + output["loss_box_reg"] + output["loss_objectness"] + output["loss_rpn_box_reg"]
 
             optimizer.zero_grad()
             loss.backward()

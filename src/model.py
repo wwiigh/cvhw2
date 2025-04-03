@@ -12,6 +12,7 @@ class Model(nn.Module):
     def __init__(self, training=True):
         super().__init__()
         self.model = models.detection.fasterrcnn_resnet50_fpn(weights='DEFAULT')
+        # self.model = models.detection.fasterrcnn_resnet50_fpn_v2(weights='DEFAULT')
         self.training = training
         num_classes = 11
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features

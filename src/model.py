@@ -11,7 +11,8 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 class Model(nn.Module):
     def __init__(self, training=True):
         super().__init__()
-        self.model = models.detection.fasterrcnn_resnet50_fpn(weights='DEFAULT')
+        self.model = models.detection.fasterrcnn_mobilenet_v3_large_fpn(weights='DEFAULT')
+        # self.model = models.detection.fasterrcnn_resnet50_fpn(weights='DEFAULT')
         # self.model = models.detection.fasterrcnn_resnet50_fpn_v2(weights='DEFAULT')
         self.training = training
         num_classes = 11

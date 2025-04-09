@@ -15,7 +15,7 @@ from model import get_model
 
 def train():
     """Start training"""
-    exp_dir = "exp13"
+    exp_dir = "exp6"
     if not os.path.exists(f"model/{exp_dir}"):
         os.makedirs(f"model/{exp_dir}")
 
@@ -24,9 +24,9 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("device:", device)
 
-    epochs = 20
+    epochs = 6
     batch_size=1
-    learning_rate = 5e-4
+    learning_rate = 1e-3
     weight_decay = 5e-4
     momentum = 0.9
 
@@ -42,12 +42,12 @@ def train():
                                          shuffle=True)
 
     model = get_model().to(device)
-    # model.load_state_dict(torch.load("model/exp8/exp8_2_final.pth")['model_state_dict'])
+    model.load_state_dict(torch.load("model/exp5/exp5_0_final.pth")['model_state_dict'])
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate,
                                   momentum=momentum, weight_decay=weight_decay)
-    # optimizer.load_state_dict(torch.load("model/exp8/exp8_2_final.pth")['optimizer_state_dict'])
+    optimizer.load_state_dict(torch.load("model/exp5/exp5_0_final.pth")['optimizer_state_dict'])
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[3, 6, 9, 12, 15, 18], gamma=0.5)
-    # scheduler.load_state_dict(torch.load("model/exp8/exp8_2_final.pth")['scheduler_state_dict'])
+    scheduler.load_state_dict(torch.load("model/exp5/exp5_0_final.pth")['scheduler_state_dict'])
 
     coco_gt = COCO("data/valid.json")
 

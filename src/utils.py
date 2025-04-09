@@ -3,8 +3,8 @@ import os
 from torchvision import transforms
 import torch.nn as nn
 import torch
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
+# import albumentations as A
+# from albumentations.pytorch import ToTensorV2
 import random
 
 # transform = A.Compose([
@@ -17,7 +17,7 @@ def random_resize(img):
     return transforms.Resize((size, size))(img)
 
 transform = transforms.Compose([
-            transforms.Lambda(lambda img: random_resize(img)),
+            # transforms.Lambda(lambda img: random_resize(img)),
             transforms.GaussianBlur(kernel_size=(5,5), sigma=(0.1, 2.0)),
             # transforms.ColorJitter(brightness=0.1,contrast=0.1,saturation=0.1,hue=0.1),
             transforms.ToTensor(),

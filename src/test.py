@@ -1,5 +1,5 @@
 import csv
-import cv2
+# import cv2
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 import torch
@@ -95,5 +95,5 @@ def test(path):
 
 
 if __name__ == "__main__":
-    test("model/exp11/exp11_19_final.pth")
+    test("model/exp6/exp6_5_final.pth")
 

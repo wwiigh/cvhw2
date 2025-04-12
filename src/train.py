@@ -3,7 +3,6 @@ import os
 import torch
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
-import numpy as np
 from pycocotools.cocoeval import COCOeval
 from pycocotools.coco import COCO
 
@@ -15,7 +14,7 @@ from model import get_model
 
 def train():
     """Start training"""
-    exp_dir = "exp6"
+    exp_dir = "exp9"
     if not os.path.exists(f"model/{exp_dir}"):
         os.makedirs(f"model/{exp_dir}")
 
@@ -24,9 +23,9 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("device:", device)
 
-    epochs = 6
-    batch_size=1
-    learning_rate = 1e-3
+    epochs = 23
+    batch_size = 1
+    learning_rate = 5e-4
     weight_decay = 5e-4
     momentum = 0.9
 
@@ -35,19 +34,22 @@ def train():
     val_dir = "data/valid"
     val_json = "data/valid.json"
 
-    train_dataloader = get_train_dataloader(train_dir, train_json, batch_size=batch_size,
+    train_dataloader = get_train_dataloader(train_dir, train_json,
+                                            batch_size=batch_size,
                                             transform=transform,
                                             shuffle=True)
-    val_dataloader = get_val_dataloader(val_dir, val_json, transform=transform_val, batch_size=batch_size,
-                                         shuffle=True)
+    val_dataloader = get_val_dataloader(val_dir, val_json,
+                                        transform=transform_val,
+                                        batch_size=batch_size,
+                                        shuffle=False)
 
     model = get_model().to(device)
-    model.load_state_dict(torch.load("model/exp5/exp5_0_final.pth")['model_state_dict'])
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate,
-                                  momentum=momentum, weight_decay=weight_decay)
-    optimizer.load_state_dict(torch.load("model/exp5/exp5_0_final.pth")['optimizer_state_dict'])
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[3, 6, 9, 12, 15, 18], gamma=0.5)
-    scheduler.load_state_dict(torch.load("model/exp5/exp5_0_final.pth")['scheduler_state_dict'])
+                                momentum=momentum, weight_decay=weight_decay)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,
+                                                     milestones=[3, 6, 9,
+                                                                 12, 15, 18],
+                                                     gamma=0.5)
 
     coco_gt = COCO("data/valid.json")
 
@@ -58,22 +60,23 @@ def train():
 
         model.train()
         for (image, target) in tqdm(train_dataloader,
-                                   desc=f"Epoch {epoch+1}/{epochs}"):
+                                    desc=f"Epoch {epoch+1}/{epochs}"):
 
             image = [img.to(device) for img in image]
-            target = [{key: value.to(device) for key, value in t.items()} for t in target]
+            target = [{key: value.to(device) for key, value in t.items()}
+                      for t in target]
 
             output = model(image, target)
- 
-            loss = output["loss_classifier"] + output["loss_box_reg"] + output["loss_objectness"] + output["loss_rpn_box_reg"]
+
+            loss = output["loss_classifier"] + output["loss_box_reg"] + \
+                output["loss_objectness"] + output["loss_rpn_box_reg"]
 
             optimizer.zero_grad()
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)
             optimizer.step()
 
             running_loss += loss.item()
-            # break
-
 
         print(f"Epoch [{epoch+1}/{epochs}], Loss: \
               {running_loss/(len(train_dataloader)):.4f}")
@@ -81,15 +84,12 @@ def train():
                           epoch)
 
         model.eval()
-        val_loss = 0
         result = []
         with torch.no_grad():
             for (image, target) in tqdm(val_dataloader, desc="val"):
                 image = [img.to(device) for img in image]
-                
 
                 output = model(image)
-                #print(output)
                 for i, out in enumerate(output):
                     image_id = target[i]["id"].item()
 
@@ -97,17 +97,17 @@ def train():
                         boxes = out["boxes"][index]
                         labels = out["labels"][index].item()
                         scores = out["scores"][index].item()
-                    
+
                         result.append({
                             "image_id": image_id,
                             "category_id": labels,
-                            "bbox": [boxes[0].item(), boxes[1].item(), boxes[2].item() - boxes[0].item(), boxes[3].item() - boxes[1].item()],
+                            "bbox": [boxes[0].item(), boxes[1].item(),
+                                     boxes[2].item() - boxes[0].item(),
+                                     boxes[3].item() - boxes[1].item()],
                             "score": scores
                         })
-                # break
 
         # use in https://zhuanlan.zhihu.com/p/134229574
-        #print(result)
         coco_dt = coco_gt.loadRes(result)
         coco_eval = COCOeval(cocoGt=coco_gt, cocoDt=coco_dt, iouType="bbox")
         coco_eval.evaluate()
@@ -121,7 +121,6 @@ def train():
         writer.add_scalar("mAP75", mAP75, epoch)
         writer.add_scalar("mAP_all", mAP_all, epoch)
 
-        
         if best_map < mAP_all:
             best_map = mAP_all
             torch.save(
@@ -142,13 +141,11 @@ def train():
                 f"model/{exp_dir}/{exp_dir}_{epoch}_final.pth"
             )
 
-
         scheduler.step()
         current_lr = scheduler.get_last_lr()[0]
         print(f"Learning Rate: {current_lr:.6f}")
 
         writer.add_scalar("Learning Rate", current_lr, epoch)
-
 
     writer.close()
 
